@@ -29,18 +29,17 @@ export const getPlan = AsyncHandler(async(req,res) => {
 export const generatePlan = AsyncHandler(async(req, res) => {
     const {title, hoursperday, durationDays, subjects, weakAreas, level} = req.body;
 
-    // Validate required fields
+  
     if(!title || !hoursperday || !durationDays || !subjects || !level){
         res.status(400)
         throw new Error("Please provide all required fields");
     }
 
-    // Calculate total weeks
+ 
     const totalWeeks = Math.ceil(durationDays / 7);
 
 
 
-    // Build prompt for Gemini AI
     const prompt = `You are an expert study plan generator. Create a detailed ${durationDays}-day study plan based on:
 
 Title: ${title}
@@ -83,7 +82,7 @@ IMPORTANT REQUIREMENTS:
         console.log("Starting AI generation...");
         console.log("API Key available:", !!process.env.GEMINI_API_KEY);
         
-        // Call Gemini AI using direct fetch (v1 API)
+
         const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
         
         const aiResponse = await fetch(url, {
@@ -110,13 +109,13 @@ IMPORTANT REQUIREMENTS:
         const text = aiData.candidates[0].content.parts[0].text;
         console.log("Raw AI response:", text.substring(0, 200) + "...");
         
-        // Parse AI response
+     
         let generatedPlan;
         try {
-            // Remove markdown code blocks if AI adds them (more aggressive cleaning)
+
             let cleanText = text.trim();
             
-            // Remove ```json or ``` at start and end
+         
             cleanText = cleanText.replace(/^```json\s*/i, '').replace(/^```\s*/, '');
             cleanText = cleanText.replace(/\s*```$/, '');
             cleanText = cleanText.trim();
@@ -132,7 +131,6 @@ IMPORTANT REQUIREMENTS:
             throw new Error("AI returned invalid JSON. Please try again.");
         }
 
-        // Validate the structure
         if(!generatedPlan.weeklyPlan || !Array.isArray(generatedPlan.weeklyPlan)){
             console.error("Invalid structure:", generatedPlan);
             res.status(500);
@@ -140,7 +138,7 @@ IMPORTANT REQUIREMENTS:
         }
 
         console.log("Saving to database...");
-        // Save to database
+     
         const newPlan = await Plan.create({
             title,
             hoursperday,
